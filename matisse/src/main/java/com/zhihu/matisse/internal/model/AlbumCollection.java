@@ -23,6 +23,7 @@ import androidx.fragment.app.FragmentActivity;
 import androidx.loader.app.LoaderManager;
 import androidx.loader.content.Loader;
 
+import com.zhihu.matisse.internal.entity.SelectionSpec;
 import com.zhihu.matisse.internal.loader.AlbumLoader;
 
 import java.lang.ref.WeakReference;
@@ -35,6 +36,11 @@ public class AlbumCollection implements LoaderManager.LoaderCallbacks<Cursor> {
     private AlbumCallbacks mCallbacks;
     private int mCurrentSelection;
     private boolean mLoadFinished;
+    private SelectionSpec mSpec;
+
+    public void setmSpec(SelectionSpec mSpec) {
+        this.mSpec = mSpec;
+    }
 
     @Override
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
@@ -43,7 +49,9 @@ public class AlbumCollection implements LoaderManager.LoaderCallbacks<Cursor> {
             return null;
         }
         mLoadFinished = false;
-        return AlbumLoader.newInstance(context);
+        AlbumLoader loader =  AlbumLoader.newInstance(context);
+        loader.setmSpec(this.mSpec);
+        return loader;
     }
 
     @Override

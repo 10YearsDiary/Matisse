@@ -31,8 +31,10 @@ import com.zhihu.matisse.MimeType;
 import com.zhihu.matisse.internal.entity.Album;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
 
+import java.text.DateFormat;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -46,6 +48,7 @@ public class AlbumLoader extends CursorLoader {
     public static final String COLUMN_URI = "uri";
     public static final String COLUMN_COUNT = "count";
     private static final Uri QUERY_URI = MediaStore.Files.getContentUri("external");
+    private SelectionSpec mSpec;
 
     private static final String[] COLUMNS = {
             MediaStore.Files.FileColumns._ID,
@@ -66,7 +69,8 @@ public class AlbumLoader extends CursorLoader {
             MediaStore.Files.FileColumns._ID,
             COLUMN_BUCKET_ID,
             COLUMN_BUCKET_DISPLAY_NAME,
-            MediaStore.MediaColumns.MIME_TYPE};
+            MediaStore.MediaColumns.MIME_TYPE,
+            MediaStore.MediaColumns.DATE_ADDED};
 
     // === params for showSingleMediaType: false ===
     private static final String SELECTION =
@@ -116,6 +120,10 @@ public class AlbumLoader extends CursorLoader {
     }
     // =============================================
 
+    public void setmSpec(SelectionSpec mSpec) {
+        this.mSpec = mSpec;
+    }
+
     private static final String BUCKET_ORDER_BY = MediaStore.Images.Media.DATE_ADDED + " DESC";
 
     private AlbumLoader(Context context, String selection, String[] selectionArgs) {
@@ -129,7 +137,7 @@ public class AlbumLoader extends CursorLoader {
         );
     }
 
-    public static CursorLoader newInstance(Context context) {
+    public static AlbumLoader newInstance(Context context) {
         String selection;
         String[] selectionArgs;
         if (SelectionSpec.getInstance().onlyShowGif()) {
@@ -196,12 +204,29 @@ public class AlbumLoader extends CursorLoader {
         } else {
             int totalCount = 0;
             Uri allAlbumCoverUri = null;
+            Uri todayCoverUri = null;
+            int todayCount = 0;
+
 
             // Pseudo GROUP BY
             Map<Long, Long> countMap = new HashMap<>();
             if (albums != null) {
                 while (albums.moveToNext()) {
                     long bucketId = albums.getLong(albums.getColumnIndex(COLUMN_BUCKET_ID));
+                    if (this.mSpec != null && this.mSpec.date != null) {
+                        int addedIndex = albums.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED);
+                        if (addedIndex >= 0) {
+                            long addtime = albums.getLong(albums.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED));
+                            long start = this.mSpec.date.getTime() / 1000;
+                            long end = start + 86400;
+                            if (addtime >= start && addtime <= end){
+                                if (todayCoverUri == null) {
+                                    todayCoverUri = allAlbumCoverUri = getUri(albums);
+                                }
+                                todayCount += 1;
+                            }
+                        }
+                    }
 
                     Long count = countMap.get(bucketId);
                     if (count == null) {
@@ -255,6 +280,15 @@ public class AlbumLoader extends CursorLoader {
                     Album.ALBUM_ID_ALL, Album.ALBUM_NAME_ALL, null,
                     allAlbumCoverUri == null ? null : allAlbumCoverUri.toString(),
                     String.valueOf(totalCount)});
+
+            if (this.mSpec != null && this.mSpec.date != null) {
+                DateFormat format = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault());
+                allAlbum.addRow(new String[]{
+                        Album.ALBUM_ID_TODAY,
+                        Album.ALBUM_ID_TODAY, format.format(this.mSpec.date), null,
+                        todayCoverUri == null ? null : todayCoverUri.toString(),
+                        String.valueOf(todayCount)});
+            }
 
             return new MergeCursor(new Cursor[]{allAlbum, otherAlbums});
         }

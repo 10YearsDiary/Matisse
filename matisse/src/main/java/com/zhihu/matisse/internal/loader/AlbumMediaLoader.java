@@ -30,6 +30,8 @@ import com.zhihu.matisse.internal.entity.Item;
 import com.zhihu.matisse.internal.entity.SelectionSpec;
 import com.zhihu.matisse.internal.utils.MediaStoreCompat;
 
+import java.util.Date;
+
 /**
  * Load images and videos into a single cursor.
  */
@@ -131,7 +133,7 @@ public class AlbumMediaLoader extends CursorLoader {
     public static CursorLoader newInstance(Context context, Album album, boolean capture) {
         String selection;
         String[] selectionArgs;
-        boolean enableCapture;
+        boolean enableCapture = false;
 
         if (album.isAll()) {
             if (SelectionSpec.getInstance().onlyShowGif()) {
@@ -153,7 +155,18 @@ public class AlbumMediaLoader extends CursorLoader {
                 selectionArgs = SELECTION_ALL_ARGS;
             }
             enableCapture = capture;
-        } else {
+        }else if(album.isToday()){
+            Date date = album.getDate();
+            String SELECTION_TODAY =
+                    "(" + MediaStore.Files.FileColumns.MEDIA_TYPE + "=?"
+                            + " OR "
+                            + MediaStore.Files.FileColumns.MEDIA_TYPE + "=?)"
+                            + " AND " + MediaStore.Images.Media.DATE_ADDED + " >= ? "
+                            + " AND " + MediaStore.Images.Media.DATE_ADDED + " <= ? "
+                            + " AND " + MediaStore.MediaColumns.SIZE + ">0";
+            selection = SELECTION_TODAY;
+            selectionArgs = getSelectionAlbumArgs(date);
+        }else {
             if (SelectionSpec.getInstance().onlyShowGif()) {
                 selection = SELECTION_ALBUM_FOR_GIF;
                 selectionArgs =
@@ -177,6 +190,16 @@ public class AlbumMediaLoader extends CursorLoader {
             enableCapture = false;
         }
         return new AlbumMediaLoader(context, selection, selectionArgs, enableCapture);
+    }
+    private static String[] getSelectionAlbumArgs(Date date) {
+        long start = date.getTime() / 1000;
+        long end = start + 86400;
+        return new String[]{
+                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_IMAGE),
+                String.valueOf(MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO),
+                String.valueOf(start),
+                String.valueOf(end)
+        };
     }
 
     @Override

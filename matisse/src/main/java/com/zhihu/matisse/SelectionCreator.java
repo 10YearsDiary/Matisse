@@ -37,6 +37,7 @@ import com.zhihu.matisse.ui.MatisseActivity;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Set;
 
 import static android.content.pm.ActivityInfo.SCREEN_ORIENTATION_BEHIND;
@@ -340,6 +341,17 @@ public final class SelectionCreator {
      */
     public SelectionCreator setOnCheckedListener(@Nullable OnCheckedListener listener) {
         mSelectionSpec.onCheckedListener = listener;
+        return this;
+    }
+
+    /**
+     * Add day album in album list
+     *
+     * @param date album date
+     * @return {@link SelectionCreator} for fluent API.
+     */
+    public SelectionCreator setExtendAlbumDate(Date date) {
+        mSelectionSpec.date = date;
         return this;
     }
 

@@ -21,11 +21,16 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.text.format.DateUtils;
 
 import androidx.annotation.Nullable;
 
 import com.zhihu.matisse.R;
 import com.zhihu.matisse.internal.loader.AlbumLoader;
+
+import java.text.DateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class Album implements Parcelable {
     public static final Creator<Album> CREATOR = new Creator<Album>() {
@@ -43,10 +48,21 @@ public class Album implements Parcelable {
     public static final String ALBUM_ID_ALL = String.valueOf(-1);
     public static final String ALBUM_NAME_ALL = "All";
 
+    public static final String ALBUM_ID_TODAY = String.valueOf(-2);
+
     private final String mId;
     private final Uri mCoverUri;
     private final String mDisplayName;
     private long mCount;
+    private Date date;
+
+    public void setDate(Date date) {
+        this.date = date;
+    }
+
+    public Date getDate() {
+        return date;
+    }
 
     public Album(String id, Uri coverUri, String albumName, long count) {
         mId = id;
@@ -113,6 +129,10 @@ public class Album implements Parcelable {
 
     public boolean isAll() {
         return ALBUM_ID_ALL.equals(mId);
+    }
+
+    public boolean isToday() {
+        return ALBUM_ID_TODAY.equals(mId);
     }
 
     public boolean isEmpty() {

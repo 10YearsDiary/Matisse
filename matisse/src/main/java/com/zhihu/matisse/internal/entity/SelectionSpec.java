@@ -28,6 +28,7 @@ import com.zhihu.matisse.filter.Filter;
 import com.zhihu.matisse.listener.OnCheckedListener;
 import com.zhihu.matisse.listener.OnSelectedListener;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -45,6 +46,7 @@ public final class SelectionSpec {
     public int maxVideoSelectable;
     public List<Filter> filters;
     public boolean capture;
+    public Date date;
     public CaptureStrategy captureStrategy;
     public int spanCount;
     public int gridExpectedSize;
