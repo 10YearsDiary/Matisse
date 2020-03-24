@@ -63,7 +63,8 @@ public class AlbumLoader extends CursorLoader {
             COLUMN_BUCKET_ID,
             COLUMN_BUCKET_DISPLAY_NAME,
             MediaStore.MediaColumns.MIME_TYPE,
-            "COUNT(*) AS " + COLUMN_COUNT};
+            "COUNT(*) AS " + COLUMN_COUNT,
+            MediaStore.MediaColumns.DATE_ADDED};
 
     private static final String[] PROJECTION_29 = {
             MediaStore.Files.FileColumns._ID,
@@ -170,9 +171,25 @@ public class AlbumLoader extends CursorLoader {
         if (beforeAndroidTen()) {
             int totalCount = 0;
             Uri allAlbumCoverUri = null;
+            Uri todayCoverUri = null;
+            int todayCount = 0;
             MatrixCursor otherAlbums = new MatrixCursor(COLUMNS);
             if (albums != null) {
                 while (albums.moveToNext()) {
+                    if (this.mSpec != null && this.mSpec.date != null) {
+                        int addedIndex = albums.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED);
+                        if (addedIndex >= 0) {
+                            long addtime = albums.getLong(albums.getColumnIndex(MediaStore.MediaColumns.DATE_ADDED));
+                            long start = this.mSpec.date.getTime() / 1000;
+                            long end = start + 86400;
+                            if (addtime >= start && addtime <= end){
+                                if (todayCoverUri == null) {
+                                    todayCoverUri = allAlbumCoverUri = getUri(albums);
+                                }
+                                todayCount += 1;
+                            }
+                        }
+                    }
                     long fileId = albums.getLong(
                             albums.getColumnIndex(MediaStore.Files.FileColumns._ID));
                     long bucketId = albums.getLong(
@@ -199,6 +216,15 @@ public class AlbumLoader extends CursorLoader {
                     Album.ALBUM_ID_ALL, Album.ALBUM_ID_ALL, Album.ALBUM_NAME_ALL, null,
                     allAlbumCoverUri == null ? null : allAlbumCoverUri.toString(),
                     String.valueOf(totalCount)});
+            if (this.mSpec != null && this.mSpec.date != null) {
+                DateFormat format = DateFormat.getDateInstance(DateFormat.MEDIUM, Locale.getDefault());
+                allAlbum.addRow(new String[]{
+                        Album.ALBUM_ID_TODAY,
+                        Album.ALBUM_ID_TODAY, format.format(this.mSpec.date), null,
+                        todayCoverUri == null ? null : todayCoverUri.toString(),
+                        String.valueOf(todayCount)});
+                // albums是group过的，所以todayCount没有实际意义
+            }
 
             return new MergeCursor(new Cursor[]{allAlbum, otherAlbums});
         } else {
