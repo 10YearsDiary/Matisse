@@ -155,7 +155,7 @@ public class AlbumMediaLoader extends CursorLoader {
                 selectionArgs = SELECTION_ALL_ARGS;
             }
             enableCapture = capture;
-        }else if(album.isToday()){
+        }else if(album.isToday() && album.getDate() != null){
             Date date = album.getDate();
             String SELECTION_TODAY =
                     "(" + MediaStore.Files.FileColumns.MEDIA_TYPE + "=?"
