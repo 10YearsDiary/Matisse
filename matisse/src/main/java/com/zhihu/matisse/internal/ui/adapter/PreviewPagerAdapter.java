@@ -55,7 +55,7 @@ public class PreviewPagerAdapter extends FragmentPagerAdapter {
     }
 
     public Item getMediaItem(int position) {
-        return mItems.get(position);
+        return position < mItems.size() ? mItems.get(position) : null;
     }
 
     public void addAll(List<Item> items) {
